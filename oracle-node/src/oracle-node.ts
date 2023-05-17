@@ -20,6 +20,8 @@ export class OracleNode {
         });
 
         socket.on("newRound", async () => {
+            console.log(`New round registered by socket ${this.id}`);
+            /*
             this.data = [];
             const subscriptions: Subscription[] = []; //TODO
 
@@ -29,6 +31,7 @@ export class OracleNode {
             });
 
             socket.emit("report", this.id);
+            */
         });
 
         socket.on("verify", (report) => {
@@ -42,6 +45,8 @@ export class OracleNode {
             console.log(data);
             console.log(this.id);
         });
+
+        socket.on("retry", () => socket.emit("retry"));
     }
 
 }

@@ -13,3 +13,10 @@ response.forEach(node => {
     nodes.push(oracleNode);
     oracleNode.serve();
 });
+
+/*
+setTimeout(() => {
+    const oracleNode = new OracleNode('4');
+    nodes.push(oracleNode);
+    oracleNode.serve();
+}, 5000) */
