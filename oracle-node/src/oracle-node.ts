@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
-import _ from "lodash";
+import { MerkleJson } from "merkle-json";
+import _, { has } from "lodash";
 import { default as axios } from 'axios';
 
 
@@ -7,10 +8,10 @@ import { default as axios } from 'axios';
 export class OracleNode {
     id: string;
     data: string[];
+    responses: string[][] = [];
+    isLeader: boolean = false;
     
-    constructor(id: string) {
-        this.id = id;
-    }
+    constructor(id: string) { this.id = id; }
 
     async serve() {
         const socket = io("ws://localhost:3000");
@@ -19,20 +20,29 @@ export class OracleNode {
             socket.emit("register", { socketId: socket.id, oracleId: this.id });
         });
 
-        socket.on("newRound", async () => {
+        socket.on("new-round", async () => {
             console.log(`New round registered by socket ${this.id}`);
-            /*
+            
             this.data = [];
-            const subscriptions: Subscription[] = []; //TODO
+            const subscriptions: Subscription[] = [ { api: "https://jsonplaceholder.ir/users" }, { api: "https://jsonplaceholder.ir/users" } ]; //TODO
 
-            subscriptions.forEach(async sub => {
+            for(let i = 0; i < subscriptions.length; i++) {
+                const sub = subscriptions[i];
                 const res = await axios.get(sub.api, { params: sub.params ? JSON.parse(sub.params) : {} });
                 if(res.data) this.data.push(JSON.stringify(res.data));
-            });
-
-            socket.emit("report", this.id);
-            */
+                if(i === subscriptions.length - 1) socket.emit("report", this.data);
+            }            
         });
+
+        socket.on("toLeader", (data) => {
+            this.responses.push(data);
+            if(this.responses.length >= 3) {
+                const final = this.aggregate();
+                socket.emit("done", final);
+            }; //TODO change max 
+        });
+
+        socket.on("done", () => console.log(`Socket ${this.id} is done.`));
 
         socket.on("verify", (report) => {
             const identical = _.isEqual(JSON.stringify(this.data), JSON.stringify(report));
@@ -41,12 +51,38 @@ export class OracleNode {
             else socket.emit("accept")
         });
 
-        socket.on("test", (data) => {
-            console.log(data);
-            console.log(this.id);
-        });
-
         socket.on("retry", () => socket.emit("retry"));
+    }
+
+    private aggregate(): string[] {
+        const map = new Map();
+        const mj = new MerkleJson();
+        let highestCount = 0;
+        let highestIndex = 0;
+        
+        for(let i = 0; i < this.responses.length; i++) {
+            const hash = mj.hash(this.responses[i]);
+
+            if(map.has(hash)) {
+                const old = map.get(hash);
+                map.set(hash, { count: old.count + 1, index: old.index });
+                
+                if(old.count + 1 > highestCount) { 
+                    highestIndex = old.index;
+                    highestCount = old.count + 1; 
+                }
+            }
+            else {
+                map.set(hash, { count: 1, index: i });
+
+                if(highestCount === 0) {
+                    highestCount = 1;
+                    highestIndex = i;
+                }
+            }
+        }
+
+        return this.responses[highestIndex];
     }
 
 }
