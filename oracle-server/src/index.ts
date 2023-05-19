@@ -62,7 +62,7 @@ io.on("connection", async (socket) => {
 
     socket.on("leader-report", (data) => {
         finalReport = data;
-        console.log(`Final report aggregated by leader:\n ${finalReport}`);
+        console.log(`Final report aggregated by leader.`);
         io.emit("verify", data);
     });
 

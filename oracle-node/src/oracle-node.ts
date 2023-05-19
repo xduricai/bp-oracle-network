@@ -20,7 +20,7 @@ export class OracleNode {
         });
 
         socket.on("new-round", async () => {
-            console.log(`New round registered by socket ${this.id}`);
+            console.log(`New round registered by Oracle ${this.id}`);
             
             this.data = [];
             this.responses = [];
@@ -46,6 +46,7 @@ export class OracleNode {
             const dataHash = this.mj.hash(this.data.map(res => res.data));
             const reportHash = this.mj.hash(report.map((res: SubscriptionData) => res.data));
 
+            console.log(`Report verified by Oracle ${this.id}`);
             dataHash === reportHash ? socket.emit("accept") : socket.emit("reject");
         });
 
@@ -80,6 +81,7 @@ export class OracleNode {
             }
         }
 
+        console.log(`Report aggregated by leader Oracle ${this.id}`);
         return this.responses[highestIndex];
     }
 
