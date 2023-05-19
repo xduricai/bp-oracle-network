@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { SocketInfo, Status } from "./util.js";
+import { SocketInfo, Status, SubscriptionData } from "./util.js";
 
 const io: Server = new Server({});
 const sockets: SocketInfo[] = [];
@@ -9,7 +9,7 @@ let leader: SocketInfo;
 let status: Status = Status.Uninitialized;
 let accepted: number = 0;
 let total: number = 0;
-let finalReport: String[] = [];
+let finalReport: SubscriptionData[] = [];
 
 const updateState = async () => {
     //status = true ? Status.InProgress : Status.Uninitialized;
@@ -26,6 +26,11 @@ const endRound = async () => {
     if(accepted >= total * (2/3)) {
     }
     console.log(`Final report ${accepted >= total * (2/3) ? 'accepted' : 'rejected'} after approval by ${accepted} out of ${total} voters.`);
+
+    finalReport.forEach(res => {
+        console.log(`Forwarding response to: ${res.address}`);
+    })
+
     await updateState();
     accepted = 0;
     total = 0;
