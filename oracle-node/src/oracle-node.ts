@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 import { MerkleJson } from "merkle-json";
-import _, { has } from "lodash";
+import _ from "lodash";
 import { default as axios } from 'axios';
 
 
@@ -24,6 +24,7 @@ export class OracleNode {
             console.log(`New round registered by socket ${this.id}`);
             
             this.data = [];
+            this.responses = [];
             const subscriptions: Subscription[] = [ { api: "https://jsonplaceholder.ir/users" }, { api: "https://jsonplaceholder.ir/users" } ]; //TODO
 
             for(let i = 0; i < subscriptions.length; i++) {
@@ -34,21 +35,16 @@ export class OracleNode {
             }            
         });
 
-        socket.on("toLeader", (data) => {
+        socket.on("to-leader", (data) => {
             this.responses.push(data);
             if(this.responses.length >= 3) {
                 const final = this.aggregate();
-                socket.emit("done", final);
+                socket.emit("leader-report", final);
             }; //TODO change max 
         });
 
-        socket.on("done", () => console.log(`Socket ${this.id} is done.`));
-
         socket.on("verify", (report) => {
-            const identical = _.isEqual(JSON.stringify(this.data), JSON.stringify(report));
-
-            if(identical) socket.emit("reject");
-            else socket.emit("accept")
+            _.isEqual(JSON.stringify(this.data), JSON.stringify(report)) ? socket.emit("accept") : socket.emit("reject");
         });
 
         socket.on("retry", () => socket.emit("retry"));

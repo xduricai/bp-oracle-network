@@ -6,5 +6,5 @@ export interface SocketInfo {
 export enum Status {
     Uninitialized,
     InProgress,
-    Standby,
+    Ending,
 }
