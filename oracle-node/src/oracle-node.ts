@@ -26,6 +26,7 @@ export class OracleNode {
         const wallet = new anchor.Wallet(keypair);
         const provider = new anchor.AnchorProvider(connection, wallet, {});
         const program = new Program(idl as anchor.Idl, programId, provider);
+        //TODO change on re-init
         const stateAddress = 'DJ9YaBTYWLDuPQGKi3uUk9N2jQ3sobuWEuVLXKbMpApk';
         const socket = io("ws://localhost:3000");
 
