@@ -2,17 +2,31 @@ import { io } from "socket.io-client";
 import { MerkleJson } from "merkle-json";
 import { default as axios } from 'axios';
 import { Subscription, SubscriptionData } from "./util.js";
+import { Connection, PublicKey, Keypair } from '@solana/web3.js';
+import * as anchor from '@project-serum/anchor';
+import { Program } from '@project-serum/anchor';
+import idl from "../../../oracle-smart-contract/target/idl/oracle_smart_contract.json" assert { type: "json" };
+import id from "../../id.json" assert { type: "json" };
 
 export class OracleNode {
     mj = new MerkleJson();
-    id: string;
+    id: number;
     data: SubscriptionData[] = [];
     responses: SubscriptionData[][] = [];
     isLeader: boolean = false;
+    oracleCount: number = 0;
     
-    constructor(id: string) { this.id = id; }
+    constructor(id: number) { this.id = id; }
 
     async serve() {
+        const connection = new Connection('http://127.0.0.1:8899');
+        const programId = new PublicKey(idl.metadata.address);
+        const walletKey = new Uint8Array(id);
+        const keypair = Keypair.fromSecretKey(walletKey);
+        const wallet = new anchor.Wallet(keypair);
+        const provider = new anchor.AnchorProvider(connection, wallet, {});
+        const program = new Program(idl as anchor.Idl, programId, provider);
+        const stateAddress = 'DJ9YaBTYWLDuPQGKi3uUk9N2jQ3sobuWEuVLXKbMpApk';
         const socket = io("ws://localhost:3000");
 
         socket.on("connect", () => {
@@ -22,13 +36,24 @@ export class OracleNode {
         socket.on("new-round", async () => {
             console.log(`New round registered by Oracle ${this.id}`);
             
+            const state = await program.account.state.fetch(stateAddress);
+            this.oracleCount = state.oracleCount;
+            const response = await program.account.subscription.all();
+
+            const subscriptions: Subscription[] = response.filter(sub => sub.account.expiration.toNumber() > 0)
+                .map(sub => ({
+                    api: JSON.parse(sub.account.options).url,
+                    params: JSON.parse(sub.account.options).params,
+                    address: sub.publicKey.toString()
+                }));
+
+
             this.data = [];
             this.responses = [];
-            const subscriptions: Subscription[] = [ { api: "https://jsonplaceholder.ir/users", address: `address ${this.id}` }, { api: "https://jsonplaceholder.ir/users", address: `address ${this.id}` } ]; //TODO
 
             for(let i = 0; i < subscriptions.length; i++) {
                 const sub = subscriptions[i];
-                const res = await axios.get(sub.api, { params: sub.params ? JSON.parse(sub.params) : {} });
+                const res = await axios.get(sub.api, { params: sub.params || {} });
                 if(res.data) this.data.push({ data: JSON.stringify(res.data), address: sub.address });
                 if(i === subscriptions.length - 1) socket.emit("report", this.data);
             }            
@@ -36,10 +61,10 @@ export class OracleNode {
 
         socket.on("to-leader", (data) => {
             this.responses.push(data);
-            if(this.responses.length >= 3) {
+            if(this.responses.length >= this.oracleCount) {
                 const final = this.aggregate();
                 socket.emit("leader-report", final);
-            }; //TODO change max 
+            };
         });
 
         socket.on("verify", (report) => {
