@@ -54,6 +54,7 @@ export class OracleNode {
 
             for(let i = 0; i < subscriptions.length; i++) {
                 const sub = subscriptions[i];
+                if(!sub.api) continue;
                 const res = await axios.get(sub.api, { params: sub.params || {} });
                 if(res.data) this.data.push({ data: JSON.stringify(res.data), address: sub.address });
                 if(i === subscriptions.length - 1) socket.emit("report", this.data);
