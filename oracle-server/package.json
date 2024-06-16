@@ -2,7 +2,7 @@
   "name": "oracle-server",
   "version": "1.0.0",
   "description": "",
-  "main": "./dist/oracle-network/oracle-server/src/index.js",
+  "main": "./dist/bp-oracle-network/oracle-server/src/index.js",
   "type": "module",
   "scripts": {
     "build": "tsc",

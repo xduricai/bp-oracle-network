@@ -3,7 +3,7 @@ import { SocketInfo, State, Status, SubscriptionData } from "./util.js";
 import { Connection, PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
-import idl from "../../../oracle-smart-contract/target/idl/oracle_smart_contract.json" assert { type: "json" };
+import idl from "../../../bp-smart-contract/target/idl/oracle_smart_contract.json" assert { type: "json" };
 import id from "../../id.json" assert { type: "json" };
 
 const connection = new Connection('http://127.0.0.1:8899');
@@ -14,7 +14,7 @@ const wallet = new anchor.Wallet(keypair);
 const provider = new anchor.AnchorProvider(connection, wallet, {});
 const program = new Program(idl as anchor.Idl, programId, provider);
 //TODO change on re-init
-const stateAddress = 'DJ9YaBTYWLDuPQGKi3uUk9N2jQ3sobuWEuVLXKbMpApk';
+const stateAddress = 'F7h5CpaPyYgrzUoTLkAhe2TXkdVYD3xBc4181MrAGLS';
 
 const io: Server = new Server({});
 const sockets: SocketInfo[] = [];
