@@ -1,6 +1,6 @@
 # Oracle Network  
 
-An implementation of the oracle server and an example of a possible oracle node implementation. Serves as a proof of concept for [Internet of Value and DeFi in Solana](https://github.com/xduricai/bp-text). The oracle server coordinates the oracles via web sockets and reports data back to the smart contract, assuming it was approved by a sufficient number of oracles. Oracles fetch subscription data which is then aggregated into a single report by the leader oracle. Finally, oracles choose whether to approve or reject this report based on whether it matches up with their own data.  
+An implementation of the oracle server and an example of a possible oracle node implementation. Serves as a proof of concept for [Internet of Value and DeFi in Solana](https://github.com/xduricai/bp-main). The oracle server coordinates the oracles via web sockets and reports data back to the smart contract, assuming it was approved by a sufficient number of oracles. Oracles fetch subscription data which is then aggregated into a single report by the leader oracle. Finally, oracles choose whether to approve or reject this report based on whether it matches up with their own data.  
 
 ## Prerequisites  
 
